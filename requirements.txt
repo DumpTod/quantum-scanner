@@ -1,1 +1,7 @@
-
+flask
+flask-cors
+yfinance
+pandas_ta
+numpy
+pandas
+gunicorn
