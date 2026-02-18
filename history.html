@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quantum Scanner — Signal History & Track Record</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f2f5;--primary:#4682b4;--primary-dark:#1a3a5c;--green:#22c55e;--red:#ef4444;--gold:#eab308;--purple:#8b5cf6;--orange:#f97316;--cyan:#06b6d4;--blue:#3b82f6;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--primary-dark),#2d5a7b,var(--primary),#5a9fd4);padding:20px 30px;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:1.4rem;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px}
+.header p{font-size:0.78rem;opacity:0.85;margin-top:4px}
+.h-btns{display:flex;gap:8px;flex-wrap:wrap}
+.h-btns a,.h-btns button{padding:10px 20px;border-radius:8px;font-size:0.83rem;font-weight:600;cursor:pointer;text-decoration:none;border:none;color:#fff;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;font-family:'Inter',sans-serif}
+.h-btns a:hover,.h-btns button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.btn-back{background:rgba(255,255,255,0.18);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.25)}
+.btn-export{background:var(--green)}
+.btn-clear{background:var(--red)}
+.btn-rescan{background:linear-gradient(135deg,var(--purple),#a78bfa)}
+
+/* FILTER BAR */
+.filter-bar{background:var(--card);padding:14px 30px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.filter-bar label{font-size:0.75rem;color:var(--text2);font-weight:500}
+.filter-bar select,.filter-bar input[type="text"]{padding:7px 12px;border-radius:6px;border:1px solid var(--border);font-size:0.8rem;background:#fff;font-family:'Inter',sans-serif;color:var(--text)}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(70,130,180,0.15)}
+.filter-bar button{padding:7px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;font-weight:500}
+.filter-bar button:hover{background:var(--primary-dark)}
+
+/* CONTAINER */
+.container{max-width:1500px;margin:0 auto;padding:20px 30px}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border-radius:10px;padding:14px;text-align:center;border-top:3px solid var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.stat-card h4{font-size:0.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:500}
+.stat-card .val{font-size:1.3rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sc-green{border-top-color:var(--green)}
+.sc-red{border-top-color:var(--red)}
+.sc-blue{border-top-color:var(--blue)}
+.sc-gold{border-top-color:var(--gold)}
+.sc-purple{border-top-color:var(--purple)}
+.sc-orange{border-top-color:var(--orange)}
+.sc-cyan{border-top-color:var(--cyan)}
+
+/* GRADE COMPARISON */
+.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.grade-card{background:var(--card);border-radius:10px;padding:16px;border-top:3px solid var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.grade-card h3{font-size:1rem;margin-bottom:10px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;gap:6px}
+.grade-badge{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;color:#fff}
+.gb-aplus{background:var(--green)}
+.gb-a{background:var(--blue)}
+.gb-bplus{background:var(--gold);color:var(--text)}
+.gd-row{display:flex;justify-content:space-between;padding:5px 0;font-size:0.8rem;border-bottom:1px solid var(--border)}
+.gd-row:last-child{border-bottom:none}
+.gd-row span:last-child{font-weight:600;font-family:'JetBrains Mono',monospace}
+
+/* MODEL LEGEND */
+.model-legend{background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.model-legend .ml-title{font-size:0.78rem;font-weight:600;color:var(--text2);margin-right:4px}
+.ml-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:0.7rem;font-weight:600;color:#fff}
+.ml-factor{background:var(--blue)}
+.ml-regime{background:var(--purple)}
+.ml-garch{background:var(--orange)}
+.ml-kalman{background:var(--cyan)}
+.ml-mc{background:var(--green)}
+.ml-note{font-size:0.72rem;color:var(--text2);margin-left:auto}
+
+/* SIGNAL LOG */
+.signal-log{background:var(--card);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.signal-log h3{font-size:1rem;margin-bottom:14px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;gap:8px}
+.signal-log h3 span{background:var(--primary);color:#fff;padding:2px 10px;border-radius:10px;font-size:0.73rem;font-weight:600}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:0.74rem}
+thead{background:var(--primary-dark);color:#fff}
+th{padding:9px 6px;cursor:pointer;white-space:nowrap;font-size:0.69rem;text-align:left;font-weight:600;letter-spacing:0.3px;user-select:none}
+th:hover{background:#2d5a7b}
+td{padding:7px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover{background:rgba(70,130,180,0.04)}
+td select{font-family:'Inter',sans-serif;font-size:0.72rem;padding:3px 6px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--text)}
+td select:focus{outline:none;border-color:var(--primary)}
+td input[type="number"]{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:3px 6px;border:1px solid var(--border);border-radius:5px;width:72px;background:#fff;color:var(--text)}
+td input:focus{outline:none;border-color:var(--primary)}
+
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:4px;margin-top:14px}
+.pagination button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;color:var(--text);transition:all 0.15s}
+.pagination button:hover:not(:disabled){background:var(--primary);color:#fff;border-color:var(--primary)}
+.pagination button:disabled{opacity:0.35;cursor:default}
+
+/* TRACK STATUS */
+.track-col{min-width:88px;text-align:center}
+.track-status{display:inline-block;padding:2px 8px;border-radius:5px;font-size:0.65rem;font-weight:600;letter-spacing:0.2px}
+.ts-open{background:rgba(59,130,246,0.12);color:var(--blue)}
+.ts-pending{background:rgba(234,179,8,0.12);color:#b45309}
+.ts-target{background:rgba(34,197,94,0.12);color:var(--green)}
+.ts-stop{background:rgba(239,68,68,0.12);color:var(--red)}
+.ts-expired{background:rgba(100,116,139,0.1);color:var(--text2)}
+.ts-error{background:rgba(239,68,68,0.08);color:var(--red)}
+.pnl-live{font-weight:600;font-size:0.72rem;font-family:'JetBrains Mono',monospace}
+.pnl-live.favor{color:var(--green)}
+.pnl-live.against{color:var(--red)}
+.pnl-live.neutral{color:var(--text2)}
+.track-details{font-size:0.63rem;color:#94a3b8;margin-top:2px}
+
+/* MODEL DOTS */
+.mdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 1px}
+
+/* RESCAN STATUS POPUP */
+.rescan-status{position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-radius:12px;padding:18px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:10000;min-width:310px;border-left:4px solid var(--purple);display:none}
+.rescan-status.active{display:block}
+.rescan-status h4{margin:0 0 8px;color:var(--purple);font-size:0.95rem;font-weight:700}
+.rs-prog{background:var(--border);border-radius:6px;height:8px;margin:8px 0;overflow:hidden}
+.rs-bar{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);border-radius:6px;transition:width 0.3s}
+.rs-text{font-size:0.8rem;color:var(--text2)}
+.rs-result{margin-top:10px;font-size:0.8rem;line-height:1.7}
+.rs-result .r-open{color:var(--blue)}
+.rs-result .r-target{color:var(--green)}
+.rs-result .r-stop{color:var(--red)}
+.rs-result .r-pending{color:#b45309}
+.rs-result .r-expired{color:var(--text2)}
+
+/* FOOTER */
+.footer{text-align:center;padding:20px;color:var(--text2);font-size:0.73rem}
+
+/* FNO TAG */
+.fno-tag{font-size:0.58rem;background:rgba(234,179,8,0.18);color:#92400e;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(4,1fr)}.grade-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;text-align:center}.filter-bar{flex-direction:column}.model-legend{flex-direction:column;align-items:flex-start}.ml-note{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- RESCAN STATUS POPUP -->
+<div class="rescan-status" id="rescanStatus">
+  <h4>🔄 Rescanning Trades...</h4>
+  <div class="rs-prog"><div class="rs-bar" id="rsBar" style="width:0%"></div></div>
+  <div class="rs-text" id="rsText">Preparing...</div>
+  <div class="rs-result" id="rsResult"></div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>⚡ Signal History & Track Record</h1>
+    <p>Quantum Scanner — Factor · HMM Regime · GARCH · Kalman · Monte Carlo</p>
+  </div>
+  <div class="h-btns">
+    <a href="index.html" class="btn-back">← Back to Scanner</a>
+    <button class="btn-rescan" id="rescanBtn" onclick="rescanTrades()">🔄 Rescan Trades</button>
+    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+    <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <select id="fGrade" onchange="applyFilters()">
+    <option value="">All Grades</option>
+    <option value="A+">A+</option>
+    <option value="A">A</option>
+    <option value="B+">B+</option>
+  </select>
+  <select id="fDir" onchange="applyFilters()">
+    <option value="">All Directions</option>
+    <option value="long">Buy / Long</option>
+    <option value="short">Sell / Short</option>
+  </select>
+  <select id="fTrend" onchange="applyFilters()">
+    <option value="">All Regimes</option>
+    <option value="bull">🟢 Bull</option>
+    <option value="bear">🔴 Bear</option>
+    <option value="sideways">🟡 Sideways</option>
+  </select>
+  <select id="fOutcome" onchange="applyFilters()">
+    <option value="">All Outcomes</option>
+    <option value="pending">⏳ Pending</option>
+    <option value="open">🔵 Open (Triggered)</option>
+    <option value="target_hit">✅ Target Hit</option>
+    <option value="stop_hit">❌ Stop Hit</option>
+    <option value="expired">⏰ Expired</option>
+  </select>
+  <input type="text" id="fSymbol" placeholder="Search symbol..." oninput="applyFilters()">
+  <button onclick="resetFilters()">Reset</button>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <!-- MODEL LEGEND -->
+  <div class="model-legend">
+    <span class="ml-title">Models:</span>
+    <span class="ml-chip ml-factor">MRB</span>
+    <span class="ml-chip ml-regime">MDD</span>
+    <span class="ml-chip ml-garch">VRC</span>
+    <span class="ml-chip ml-kalman">OFI</span>
+    <span class="ml-chip ml-mc">MTC</span>
+    <span class="ml-note">Signal when 3+ models agree · Sell: FnO only</span>
+  </div>
+
+  <!-- STATS GRID -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- GRADE COMPARISON -->
+  <div class="grade-grid" id="gradeGrid"></div>
+
+  <!-- SIGNAL LOG -->
+  <div class="signal-log">
+    <h3>Signal Log <span>0</span></h3>
+    <div id="signalLog"></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Quantum Scanner v2.0 — Signal history stored in browser localStorage (max 5,000 signals)
+</div>
+
+<script>
+const PER_PAGE=50;
+let allSignals=[];
+let filtered=[];
+let currentPage=1;
+let sortCol='scan_date';
+let sortDir='desc';
+
+// Load signals from shared localStorage key
+try{
+  let raw=localStorage.getItem('signalHistory');
+  if(raw){
+    let all=JSON.parse(raw);
+    // Filter only quantum scanner signals (have agreeing_models or signal_type contains 'quantum')
+    allSignals=all.filter(s=>{
+      return s.agreeing_models || (s.scanner_type && s.scanner_type==='quantum') || (s.model_scores);
+    });
+  }
+}catch(e){console.error('Failed to load signals:',e)}
+
+function save(){
+  // We need to save back to the shared signalHistory but only update quantum signals
+  try{
+    let raw=localStorage.getItem('signalHistory');
+    let all=raw?JSON.parse(raw):[];
+    // Replace quantum signals with our updated ones
+    let nonQuantum=all.filter(s=>{
+      return !(s.agreeing_models || (s.scanner_type && s.scanner_type==='quantum') || (s.model_scores));
+    });
+    let merged=[...nonQuantum,...allSignals];
+    // Cap at 5000
+    if(merged.length>5000) merged=merged.slice(-5000);
+    localStorage.setItem('signalHistory',JSON.stringify(merged));
+  }catch(e){console.error('Save error:',e)}
+  applyFilters();
+}
+
+function getActiveModels(s){
+  if(s.agreeing_models){
+    let models=s.agreeing_models.split(',').map(x=>x.trim()).filter(x=>x);
+    return models;
+  }
+  if(s.model_votes){
+    let models=[];
+    let mv=s.model_votes;
+    if(mv.factor||mv.MRB) models.push('MRB');
+    if(mv.regime||mv.MDD) models.push('MDD');
+    if(mv.garch||mv.VRC) models.push('VRC');
+    if(mv.kalman||mv.OFI) models.push('OFI');
+    if(mv.monte_carlo||mv.MTC) models.push('MTC');
+    return models;
+  }
+  return [];
+}
+
+function getActiveCount(s){
+  return getActiveModels(s).length;
+}
+
+function modelDots(s){
+  let allModels=['MRB','MDD','VRC','OFI','MTC'];
+  let colors={'MRB':'#3b82f6','MDD':'#8b5cf6','VRC':'#f97316','OFI':'#06b6d4','MTC':'#22c55e'};
+  let active=getActiveModels(s);
+  let h='';
+  allModels.forEach(m=>{
+    let on=active.includes(m);
+    h+=`<span class="mdot" style="background:${on?colors[m]:'#d1d5db'}" title="${m}${on?' ✓':''}"></span>`;
+  });
+  return h;
+}
+
+function calcPnL(s){
+  let ep=parseFloat(s.exit_price);
+  let ent=parseFloat(s.entry);
+  if(isNaN(ep)||isNaN(ent)||ent===0||ep===0) return null;
+  let dir=(s.direction||s.signal_type||'').toUpperCase();
+  if(dir.includes('LONG')||dir.includes('BUY')){
+    return Math.round((ep-ent)/ent*10000)/100;
+  } else {
+    return Math.round((ent-ep)/ent*10000)/100;
+  }
+}
+
+function updateOutcome(id,val){
+  let idx=allSignals.findIndex(s=>s._id===id);
+  if(idx>-1){allSignals[idx].outcome=val;save();}
+}
+
+function updateExit(id,val){
+  let idx=allSignals.findIndex(s=>s._id===id);
+  if(idx>-1){
+    allSignals[idx].exit_price=val;
+    allSignals[idx].pnl=calcPnL(allSignals[idx]);
+    save();
+  }
+}
+
+function applyFilters(){
+  let fG=document.getElementById('fGrade').value;
+  let fD=document.getElementById('fDir').value;
+  let fT=document.getElementById('fTrend').value;
+  let fO=document.getElementById('fOutcome').value;
+  let fS=document.getElementById('fSymbol').value.toLowerCase();
+
+  filtered=allSignals.filter(s=>{
+    if(fG && (s.grade||s.signal_grade||'')!==fG) return false;
+    if(fD){
+      let dir=(s.direction||s.signal_type||'').toLowerCase();
+      if(fD==='long' && !dir.includes('long') && !dir.includes('buy')) return false;
+      if(fD==='short' && !dir.includes('short') && !dir.includes('sell')) return false;
+    }
+    if(fT){
+      let regime=(s.regime||s.market_regime||s.trend||'').toLowerCase();
+      if(fT==='bull' && !regime.includes('bull') && !regime.includes('up')) return false;
+      if(fT==='bear' && !regime.includes('bear') && !regime.includes('down')) return false;
+      if(fT==='sideways' && !regime.includes('side') && !regime.includes('neutral')) return false;
+    }
+    if(fO){
+      if(fO==='open'){
+        if(s.track_status!=='open') return false;
+      } else {
+        if((s.outcome||'pending')!==fO) return false;
+      }
+    }
+    if(fS && !(s.symbol||'').toLowerCase().includes(fS)) return false;
+    return true;
+  });
+
+  filtered.sort((a,b)=>{
+    let av=a[sortCol]||'';
+    let bv=b[sortCol]||'';
+    if(typeof av==='number'&&typeof bv==='number') return sortDir==='asc'?av-bv:bv-av;
+    let cmp=String(av).localeCompare(String(bv));
+    return sortDir==='asc'?cmp:-cmp;
+  });
+
+  currentPage=1;
+  render();
+}
+
+function resetFilters(){
+  document.getElementById('fGrade').value='';
+  document.getElementById('fDir').value='';
+  document.getElementById('fTrend').value='';
+  document.getElementById('fOutcome').value='';
+  document.getElementById('fSymbol').value='';
+  filtered=[...allSignals];
+  currentPage=1;
+  render();
+}
+
+function sortBy(col){
+  if(sortCol===col){sortDir=sortDir==='asc'?'desc':'asc';}
+  else{sortCol=col;sortDir='desc';}
+  filtered.sort((a,b)=>{
+    let av=a[sortCol]||'';
+    let bv=b[sortCol]||'';
+    if(typeof av==='number'&&typeof bv==='number') return sortDir==='asc'?av-bv:bv-av;
+    let cmp=String(av).localeCompare(String(bv));
+    return sortDir==='asc'?cmp:-cmp;
+  });
+  renderTable();
+}
+
+function renderStats(){
+  let sigs=filtered;
+  let total=sigs.length;
+  let targets=sigs.filter(s=>s.outcome==='target_hit').length;
+  let stops=sigs.filter(s=>s.outcome==='stop_hit').length;
+  let resolved=targets+stops;
+  let wr=resolved>0?Math.round(targets/resolved*100):0;
+  let pending=sigs.filter(s=>!s.outcome||s.outcome==='pending').length;
+  let openCount=sigs.filter(s=>s.track_status==='open').length;
+  let avgScore=total>0?Math.round(sigs.reduce((a,s)=>a+(s.grade_score||s.score||0),0)/total):0;
+  let avgRR=total>0?(sigs.reduce((a,s)=>a+(s.risk_reward||0),0)/total).toFixed(2):'0.00';
+  let totalPnL=sigs.reduce((a,s)=>{let p=calcPnL(s);return a+(p||0);},0).toFixed(2);
+  let pnlColor=parseFloat(totalPnL)>=0?'var(--green)':'var(--red)';
+
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><h4>Total Signals</h4><div class="val">${total}</div></div>
+    <div class="stat-card sc-green"><h4>Targets Hit</h4><div class="val" style="color:var(--green)">${targets}</div></div>
+    <div class="stat-card sc-red"><h4>Stops Hit</h4><div class="val" style="color:var(--red)">${stops}</div></div>
+    <div class="stat-card sc-blue"><h4>Win Rate</h4><div class="val" style="color:var(--blue)">${wr}%</div></div>
+    <div class="stat-card sc-gold"><h4>Pending</h4><div class="val" style="color:#b45309">${pending}</div></div>
+    <div class="stat-card sc-cyan"><h4>Open Trades</h4><div class="val" style="color:var(--cyan)">${openCount}</div></div>
+    <div class="stat-card sc-purple"><h4>Avg Score</h4><div class="val" style="color:var(--purple)">${avgScore}</div></div>
+    <div class="stat-card ${parseFloat(totalPnL)>=0?'sc-green':'sc-red'}"><h4>Total P&L</h4><div class="val" style="color:${pnlColor}">${totalPnL}%</div></div>
+  `;
+}
+
+function renderGrades(){
+  let grades=[
+    {key:'A+',cls:'gb-aplus'},
+    {key:'A',cls:'gb-a'},
+    {key:'B+',cls:'gb-bplus'}
+  ];
+  let html='';
+  grades.forEach(g=>{
+    let gs=allSignals.filter(s=>(s.grade||s.signal_grade||'')===g.key);
+    let t=gs.length;
+    let tgt=gs.filter(s=>s.outcome==='target_hit').length;
+    let stp=gs.filter(s=>s.outcome==='stop_hit').length;
+    let res=tgt+stp;
+    let wr=res>0?Math.round(tgt/res*100):0;
+    let avgSc=t>0?Math.round(gs.reduce((a,s)=>a+(s.grade_score||s.score||0),0)/t):0;
+    let avgConf=t>0?Math.round(gs.reduce((a,s)=>{
+      let c=s.confidence;
+      if(typeof c==='number') return a+c;
+      if(typeof c==='string'){
+        if(c.toUpperCase()==='HIGH') return a+85;
+        if(c.toUpperCase()==='MEDIUM') return a+60;
+        if(c.toUpperCase()==='LOW') return a+35;
+        let parsed=parseFloat(c);
+        if(!isNaN(parsed)) return a+parsed;
+      }
+      if(s.probability) return a+(s.probability*100);
+      return a;
+    },0)/t):0;
+    let pnl=gs.reduce((a,s)=>{let p=calcPnL(s);return a+(p||0);},0).toFixed(2);
+    let pC=parseFloat(pnl)>=0?'var(--green)':'var(--red)';
+    let avgModels=t>0?(gs.reduce((a,s)=>a+getActiveCount(s),0)/t).toFixed(1):'0';
+
+    html+=`<div class="grade-card">
+      <h3><span class="grade-badge ${g.cls}">${g.key}</span> Signals (${t})</h3>
+      <div class="gd-row"><span>Win Rate</span><span>${wr}%</span></div>
+      <div class="gd-row"><span>Targets Hit</span><span style="color:var(--green)">${tgt}</span></div>
+      <div class="gd-row"><span>Stops Hit</span><span style="color:var(--red)">${stp}</span></div>
+      <div class="gd-row"><span>Avg Score</span><span>${avgSc}</span></div>
+      <div class="gd-row"><span>Avg Confidence</span><span>${avgConf}%</span></div>
+      <div class="gd-row"><span>Avg Models</span><span>${avgModels}/5</span></div>
+      <div class="gd-row"><span>Total P&L</span><span style="color:${pC};font-weight:700">${pnl}%</span></div>
+    </div>`;
+  });
+  document.getElementById('gradeGrid').innerHTML=html;
+}
+
+function renderTable(){
+  let sl=filtered.slice((currentPage-1)*PER_PAGE,currentPage*PER_PAGE);
+  let ar=function(col){return sortCol===col?(sortDir==='asc'?' ▲':' ▼'):'';};
+
+  let h=`<table><thead><tr>
+    <th onclick="sortBy('scan_date')">Date${ar('scan_date')}</th>
+    <th onclick="sortBy('symbol')">Symbol${ar('symbol')}</th>
+    <th onclick="sortBy('direction')">Dir${ar('direction')}</th>
+    <th onclick="sortBy('grade')">Grade${ar('grade')}</th>
+    <th onclick="sortBy('grade_score')">Score${ar('grade_score')}</th>
+    <th>Models</th>
+    <th onclick="sortBy('entry')">Entry${ar('entry')}</th>
+    <th onclick="sortBy('stop_loss')">SL${ar('stop_loss')}</th>
+    <th onclick="sortBy('target')">Target${ar('target')}</th>
+    <th onclick="sortBy('risk_reward')">R:R${ar('risk_reward')}</th>
+    <th>Conf</th>
+    <th>Regime</th>
+    <th>Outcome</th>
+    <th class="track-col">Track Status</th>
+    <th class="track-col">Live P&L</th>
+    <th>Exit ₹</th>
+    <th>P&L%</th>
+  </tr></thead><tbody>`;
+
+  sl.forEach(s=>{
+    let dir=(s.direction||s.signal_type||'').toUpperCase();
+    let isLong=dir.includes('LONG')||dir.includes('BUY');
+    let dCls=isLong?'color:var(--green)':'color:var(--red)';
+    let dTxt=isLong?'LONG':'SHORT';
+    let g=s.grade||s.signal_grade||'';
+    let gCls=g==='A+'?'gb-aplus':g==='A'?'gb-a':'gb-bplus';
+    let sc=s.grade_score||s.score||0;
+    let ent=s.entry||0;
+    let slv=s.sl||s.stop_loss||0;
+    let tgt=s.target||0;
+    let rr=s.risk_reward||0;
+
+    // Confidence display
+    let conf=s.confidence||'';
+    if(typeof conf==='number') conf=conf+'%';
+    else if(typeof conf==='string' && !conf.includes('%')){
+      let c=conf.toUpperCase();
+      if(c==='HIGH') conf='HIGH';
+      else if(c==='MEDIUM') conf='MED';
+      else if(c==='LOW') conf='LOW';
+    }
+    if(!conf && s.probability) conf=Math.round(s.probability*100)+'%';
+    if(!conf) conf='—';
+
+    // Regime
+    let regime=s.regime||s.market_regime||s.trend||'—';
+    let regimeUpper=(regime||'').toUpperCase();
+    let regimeColor=regimeUpper.includes('BULL')||regimeUpper.includes('UP')?'var(--green)':
+                    regimeUpper.includes('BEAR')||regimeUpper.includes('DOWN')?'var(--red)':
+                    'var(--gold)';
+
+    let oc=s.outcome||'pending';
+    let ep=s.exit_price||'';
+    let pnl=calcPnL(s);
+    let pnlCls=pnl>0?'color:var(--green)':pnl<0?'color:var(--red)':'color:var(--text2)';
+    let pnlTxt=pnl!==null?pnl.toFixed(2)+'%':'—';
+    let fno=s.is_fno?'<span class="fno-tag">FnO</span>':'';
+
+    // Track status
+    let ts=s.track_status||'';
+    let trackClass='ts-pending';
+    let trackLabel='⏳ Not Tracked';
+    switch(ts){
+      case 'open':trackClass='ts-open';trackLabel='🔵 Open';break;
+      case 'target_hit':trackClass='ts-target';trackLabel='✅ Target';break;
+      case 'stop_hit':trackClass='ts-stop';trackLabel='❌ SL Hit';break;
+      case 'expired':trackClass='ts-expired';trackLabel='⏰ Expired';break;
+      case 'error':trackClass='ts-error';trackLabel='⚠️ Error';break;
+      case 'pending':trackClass='ts-pending';trackLabel='⏳ Pending';break;
+    }
+
+    // Live P&L
+    let livePnl='<span class="pnl-live neutral">—</span>';
+    if(ts==='open' && s.live_pnl_pct!==undefined){
+      let lCls=s.live_pnl_pct>0?'favor':s.live_pnl_pct<0?'against':'neutral';
+      let arrow2=s.live_pnl_pct>0?'▲':s.live_pnl_pct<0?'▼':'—';
+      livePnl=`<span class="pnl-live ${lCls}">${arrow2} ₹${s.live_pnl_price||0} (${s.live_pnl_pct}%)</span>`;
+      if(s.sl_distance!==undefined){
+        livePnl+=`<div class="track-details">SL: ₹${s.sl_distance} away</div>`;
+        livePnl+=`<div class="track-details">Tgt: ₹${s.target_distance} away</div>`;
+      }
+    } else if(ts==='target_hit'){
+      livePnl='<span class="pnl-live favor">✅ Target Hit</span>';
+    } else if(ts==='stop_hit'){
+      livePnl='<span class="pnl-live against">❌ SL Hit</span>';
+    } else if(ts==='expired'){
+      livePnl='<span class="pnl-live neutral">Expired</span>';
+    }
+
+    // Track details
+    let trackExtra='';
+    if(s.last_tracked) trackExtra+=`<div class="track-details">Checked: ${s.last_tracked}</div>`;
+    if(s.trigger_date) trackExtra+=`<div class="track-details">Triggered: ${s.trigger_date}</div>`;
+    if(s.days_pending>0 && (!ts||ts==='pending')) trackExtra+=`<div class="track-details">Pending: ${s.days_pending} day(s)</div>`;
+
+    h+=`<tr>
+      <td style="white-space:nowrap">${s.scan_date||'—'}</td>
+      <td style="font-weight:600">${s.symbol||'—'}${fno}</td>
+      <td style="${dCls};font-weight:600">${dTxt}</td>
+      <td><span class="grade-badge ${gCls}" style="font-size:0.68rem">${g}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${sc}</td>
+      <td>${modelDots(s)}</td>
+      <td style="color:var(--primary);font-family:'JetBrains Mono',monospace">₹${Number(ent).toFixed(2)}</td>
+      <td style="color:var(--red);font-family:'JetBrains Mono',monospace">₹${Number(slv).toFixed(2)}</td>
+      <td style="color:var(--green);font-family:'JetBrains Mono',monospace">₹${Number(tgt).toFixed(2)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${Number(rr).toFixed(2)}</td>
+      <td>${conf}</td>
+      <td style="color:${regimeColor};font-weight:500;font-size:0.72rem">${regime}</td>
+      <td><select onchange="updateOutcome('${s._id}',this.value)">
+        <option value="pending" ${oc==='pending'?'selected':''}>⏳ Pending</option>
+        <option value="target_hit" ${oc==='target_hit'?'selected':''}>✅ Target Hit</option>
+        <option value="stop_hit" ${oc==='stop_hit'?'selected':''}>❌ Stop Hit</option>
+        <option value="expired" ${oc==='expired'?'selected':''}>⏰ Expired</option>
+      </select></td>
+      <td class="track-col"><span class="track-status ${trackClass}">${trackLabel}</span>${trackExtra}</td>
+      <td class="track-col">${livePnl}</td>
+      <td><input type="number" value="${ep}" onchange="updateExit('${s._id}',this.value)" placeholder="Exit ₹"></td>
+      <td style="${pnlCls};font-weight:700;font-family:'JetBrains Mono',monospace">${pnlTxt}</td>
+    </tr>`;
+  });
+
+  h+='</tbody></table>';
+
+  // Pagination
+  let totalPages=Math.ceil(filtered.length/PER_PAGE);
+  if(totalPages>1){
+    h+='<div class="pagination">';
+    h+=`<button onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
+    h+=`<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    let startP=Math.max(1,currentPage-2);
+    let endP=Math.min(totalPages,startP+4);
+    if(endP-startP<4) startP=Math.max(1,endP-4);
+    for(let p=startP;p<=endP;p++){
+      h+=`<button onclick="goPage(${p})" ${p===currentPage?'style="background:var(--primary);color:#fff;border-color:var(--primary)"':''}>${p}</button>`;
+    }
+    h+=`<button onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    h+=`<button onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
+    h+='</div>';
+  }
+
+  document.getElementById('signalLog').innerHTML=h;
+  document.querySelector('.signal-log h3 span').textContent=filtered.length;
+}
+
+function goPage(p){currentPage=p;renderTable();}
+
+function render(){
+  renderStats();
+  renderGrades();
+  renderTable();
+}
+
+function exportCSV(){
+  let csv='Date,Symbol,FnO,Direction,Grade,Score,Models,Entry,SL,Target,RR,Confidence,Regime,Outcome,TrackStatus,LivePnL,ExitPrice,PnL%\n';
+  filtered.forEach(s=>{
+    let dir=(s.direction||s.signal_type||'').toUpperCase();
+    let isLong=dir.includes('LONG')||dir.includes('BUY');
+    let pnl=calcPnL(s);
+    let models=getActiveModels(s).join('+');
+    csv+=`${s.scan_date||''},${s.symbol||''},${s.is_fno?'Yes':'No'},${isLong?'LONG':'SHORT'},${s.grade||''},${s.grade_score||s.score||0},${models},${s.entry||0},${s.sl||s.stop_loss||0},${s.target||0},${s.risk_reward||0},${s.confidence||''},${s.regime||s.market_regime||''},${s.outcome||'pending'},${s.track_status||'not_tracked'},${s.live_pnl_pct||''},${s.exit_price||''},${pnl!==null?pnl:''}\n`;
+  });
+  let blob=new Blob([csv],{type:'text/csv'});
+  let url=URL.createObjectURL(blob);
+  let a=document.createElement('a');
+  a.href=url;
+  a.download=`quantum_signal_history_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAll(){
+  if(confirm('Are you sure? This will delete ALL Quantum signal history permanently.')){
+    // Remove only quantum signals from shared storage
+    try{
+      let raw=localStorage.getItem('signalHistory');
+      let all=raw?JSON.parse(raw):[];
+      let nonQuantum=all.filter(s=>{
+        return !(s.agreeing_models || (s.scanner_type && s.scanner_type==='quantum') || (s.model_scores));
+      });
+      localStorage.setItem('signalHistory',JSON.stringify(nonQuantum));
+    }catch(e){}
+    allSignals=[];
+    applyFilters();
+  }
+}
+
+// ━━━ RESCAN TRADES TRACKING ━━━
+
+function getApiUrl(){
+  // Quantum scanner uses renderApiUrl (saved by its index.html)
+  return (localStorage.getItem('renderApiUrl')||'https://quant-scanner.onrender.com').replace(/\/+$/,'');
+}
+
+async function rescanTrades(){
+  const btn=document.getElementById('rescanBtn');
+  const statusBox=document.getElementById('rescanStatus');
+  const bar=document.getElementById('rsBar');
+  const text=document.getElementById('rsText');
+  const result=document.getElementById('rsResult');
+
+  // Get trackable signals
+  let trackable=allSignals.filter(s=>{
+    let oc=s.outcome||'pending';
+    let ts=s.track_status||'';
+    return (oc==='pending' && ts!=='expired' && ts!=='target_hit' && ts!=='stop_hit') || ts==='open';
+  });
+
+  // Deduplicate
+  let seen=new Set();
+  let toTrack=[];
+  trackable.forEach(s=>{
+    if(!seen.has(s._id)){seen.add(s._id);toTrack.push(s);}
+  });
+
+  if(toTrack.length===0){
+    alert('No pending or open trades to rescan.\n\nAll trades are either expired, target hit, or stop hit.');
+    return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML='⏳ Rescanning...';
+  statusBox.classList.add('active');
+  bar.style.width='0%';
+  text.textContent=`Found ${toTrack.length} trades to track...`;
+  result.innerHTML='';
+
+  let apiUrl=getApiUrl();
+
+  // Wake up server
+  text.textContent='Waking up server (may take 30s if sleeping)...';
+  bar.style.width='5%';
+
+  try{
+    let c=new AbortController();
+    let t=setTimeout(()=>c.abort(),30000);
+    await fetch(`${apiUrl}/api/status`,{signal:c.signal});
+    clearTimeout(t);
+  }catch(e){
+    text.textContent='Server waking up, continuing...';
+  }
+
+  bar.style.width='10%';
+  text.textContent='Server ready. Tracking signals...';
+
+  // Since Quantum's app.py doesn't have /api/track yet,
+  // we use Peak & Trough scanner's /api/track endpoint
+  // (it just needs yahoo ticker + price levels)
+  let ptApiUrl=(localStorage.getItem('ptScannerApiUrl')||'https://peak-trough-scanner.onrender.com').replace(/\/+$/,'');
+
+  // Wake PT server too
+  text.textContent='Connecting to tracking server...';
+  try{
+    let c2=new AbortController();
+    let t2=setTimeout(()=>c2.abort(),30000);
+    await fetch(`${ptApiUrl}/api/health`,{signal:c2.signal});
+    clearTimeout(t2);
+  }catch(e){}
+
+  bar.style.width='15%';
+
+  // Batch (max 20)
+  const BATCH_SIZE=20;
+  let batches=[];
+  for(let i=0;i<toTrack.length;i+=BATCH_SIZE){
+    batches.push(toTrack.slice(i,i+BATCH_SIZE));
+  }
+
+  let stats={triggered:0,expired:0,pending:0,targetHit:0,stopHit:0,open:0,errors:0};
+  let processedCount=0;
+
+  for(let bIdx=0;bIdx<batches.length;bIdx++){
+    let batch=batches[bIdx];
+
+    let payload=batch.map(s=>({
+      _id:s._id,
+      symbol:s.symbol||'',
+      yahoo_ticker:s.yahoo_ticker||(s.symbol?s.symbol+'.NS':''),
+      entry:s.entry||0,
+      sl:s.sl||s.stop_loss||0,
+      target:s.target||0,
+      direction:s.direction||s.signal_type||'',
+      signal_date:s.scan_date||'',
+      days_pending:s.days_pending||0
+    }));
+
+    text.textContent=`Tracking batch ${bIdx+1}/${batches.length} (${batch.length} signals)...`;
+
+    try{
+      let c3=new AbortController();
+      let t3=setTimeout(()=>c3.abort(),120000);
+      let resp=await fetch(`${ptApiUrl}/api/track`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({signals:payload}),
+        signal:c3.signal
+      });
+      clearTimeout(t3);
+
+      if(!resp.ok) throw new Error(`Server error: ${resp.status}`);
+
+      let data=await resp.json();
+
+      if(data.results && Array.isArray(data.results)){
+        data.results.forEach(r=>{
+          let idx=allSignals.findIndex(s=>s._id===r._id);
+          if(idx===-1) return;
+
+          let sig=allSignals[idx];
+          sig.track_status=r.status||'pending';
+          sig.last_tracked=r.last_checked||new Date().toISOString().slice(0,16).replace('T',' ');
+          sig.days_pending=r.days_pending||sig.days_pending||0;
+
+          if(r.entry_triggered) sig.trigger_date=r.trigger_date||'';
+
+          if(r.status==='open'){
+            sig.live_pnl_price=r.pnl_price||0;
+            sig.live_pnl_pct=r.pnl_pct||0;
+            sig.current_close=r.current_close||0;
+            sig.sl_distance=r.sl_distance||0;
+            sig.target_distance=r.target_distance||0;
+            stats.open++;
+          } else if(r.status==='target_hit'){
+            sig.outcome='target_hit';
+            sig.exit_price=r.exit_price||sig.target;
+            sig.pnl=calcPnL(sig);
+            stats.targetHit++;
+          } else if(r.status==='stop_hit'){
+            sig.outcome='stop_hit';
+            sig.exit_price=r.exit_price||(sig.sl||sig.stop_loss);
+            sig.pnl=calcPnL(sig);
+            stats.stopHit++;
+          } else if(r.status==='expired'){
+            sig.outcome='expired';
+            sig.track_status='expired';
+            stats.expired++;
+          } else if(r.status==='error'){
+            sig.track_status='error';
+            stats.errors++;
+          } else {
+            stats.pending++;
+          }
+
+          allSignals[idx]=sig;
+        });
+      }
+    }catch(e){
+      console.error(`Batch ${bIdx+1} error:`,e);
+      stats.errors+=batch.length;
+      text.textContent=`Batch ${bIdx+1} failed: ${e.message}. Continuing...`;
+    }
+
+    processedCount+=batch.length;
+    let pct=15+Math.round((processedCount/toTrack.length)*80);
+    bar.style.width=pct+'%';
+  }
+
+  // Save back
+  save();
+  bar.style.width='100%';
+  text.textContent='✅ Rescan complete!';
+
+  result.innerHTML=`
+    <div><span class="r-open">🔵 Open trades: ${stats.open}</span></div>
+    <div><span class="r-target">✅ Targets hit: ${stats.targetHit}</span></div>
+    <div><span class="r-stop">❌ Stops hit: ${stats.stopHit}</span></div>
+    <div><span class="r-pending">⏳ Still pending: ${stats.pending}</span></div>
+    <div><span class="r-expired">⏰ Expired: ${stats.expired}</span></div>
+    ${stats.errors>0?`<div><span class="r-stop">⚠️ Errors: ${stats.errors}</span></div>`:''}
+  `;
+
+  applyFilters();
+
+  btn.disabled=false;
+  btn.innerHTML='🔄 Rescan Trades';
+
+  setTimeout(()=>{statusBox.classList.remove('active');},10000);
+}
+
+// ━━━ INIT ━━━
+applyFilters();
+</script>
+</body>
+</html>
