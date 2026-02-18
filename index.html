@@ -978,7 +978,9 @@
         }
 
         async function runScan() {
-            const apiUrl = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+            let apiUrl = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+            if(apiUrl) localStorage.setItem('renderApiUrl', apiUrl);
+            if(!apiUrl) apiUrl = localStorage.getItem('renderApiUrl') || '';
             if (!apiUrl) { alert('Please paste your Cloudflare tunnel URL first.'); return; }
 
             document.getElementById('loadingOverlay').classList.add('active');
@@ -1006,6 +1008,102 @@
                 if (data.sell?.length > 0) {
                     sc.innerHTML = data.sell.map(s => createStockCard(s,'sell')).join('');
                     document.getElementById('sellCount').textContent = `${data.sell.length} signals`;
+                    // Auto-save signals to history for history.html
+(function saveSignalHistory(){
+  try {
+    let existing = JSON.parse(localStorage.getItem('signalHistory') || '[]');
+    let today = new Date().toISOString().slice(0,10);
+    let newSignals = [];
+
+    let buySignals = data.buy || [];
+    let sellSignals = data.sell || [];
+
+    buySignals.forEach(function(s){
+      let id = today + '_' + (s.symbol||'') + '_buy_quantum';
+      if(!existing.find(function(e){return e._id === id;})){
+        newSignals.push({
+          _id: id,
+          scan_date: today,
+          symbol: s.symbol || '',
+          yahoo_ticker: (s.symbol||'') + '.NS',
+          direction: 'BUY-LONG',
+          signal_type: 'buy',
+          scanner_type: 'quantum',
+          grade: s.grade || '',
+          signal_grade: s.grade || '',
+          grade_score: s.score || 0,
+          score: s.score || 0,
+          entry: s.entry || 0,
+          sl: s.stop_loss || 0,
+          stop_loss: s.stop_loss || 0,
+          target: s.target || 0,
+          risk_reward: s.risk_reward || 0,
+          confidence: s.confidence || '',
+          probability: 0,
+          is_fno: s.is_fno || false,
+          regime: s.regime || s.market_regime || '',
+          market_regime: s.regime || s.market_regime || '',
+          trend: s.regime || '',
+          agreeing_models: s.agreeing_models || '',
+          model_votes: s.model_votes || {},
+          model_scores: s.model_scores || {},
+          outcome: 'pending',
+          exit_price: '',
+          pnl: '',
+          track_status: '',
+          days_pending: 0
+        });
+      }
+    });
+
+    sellSignals.forEach(function(s){
+      let id = today + '_' + (s.symbol||'') + '_sell_quantum';
+      if(!existing.find(function(e){return e._id === id;})){
+        newSignals.push({
+          _id: id,
+          scan_date: today,
+          symbol: s.symbol || '',
+          yahoo_ticker: (s.symbol||'') + '.NS',
+          direction: 'SELL-SHORT',
+          signal_type: 'sell',
+          scanner_type: 'quantum',
+          grade: s.grade || '',
+          signal_grade: s.grade || '',
+          grade_score: s.score || 0,
+          score: s.score || 0,
+          entry: s.entry || 0,
+          sl: s.stop_loss || 0,
+          stop_loss: s.stop_loss || 0,
+          target: s.target || 0,
+          risk_reward: s.risk_reward || 0,
+          confidence: s.confidence || '',
+          probability: 0,
+          is_fno: s.is_fno || false,
+          regime: s.regime || s.market_regime || '',
+          market_regime: s.regime || s.market_regime || '',
+          trend: s.regime || '',
+          agreeing_models: s.agreeing_models || '',
+          model_votes: s.model_votes || {},
+          model_scores: s.model_scores || {},
+          outcome: 'pending',
+          exit_price: '',
+          pnl: '',
+          track_status: '',
+          days_pending: 0
+        });
+      }
+    });
+
+    if(newSignals.length > 0){
+      let merged = existing.concat(newSignals);
+      if(merged.length > 5000) merged = merged.slice(merged.length - 5000);
+      localStorage.setItem('signalHistory', JSON.stringify(merged));
+      console.log('Saved ' + newSignals.length + ' signals to history');
+    }
+  } catch(e) {
+    console.error('Failed to save signal history:', e);
+  }
+})();
                 } else {
                     sc.innerHTML = '<div class="empty-state"><div class="icon">🎯</div><p>No SELL signals</p></div>';
                     document.getElementById('sellCount').textContent = '0';
@@ -1033,7 +1131,13 @@
         renderJournal();
         updateAnalytics();
         updateCharts();
+        // Load saved API URL on page load
+(function(){
+  let saved = localStorage.getItem('renderApiUrl');
+  if(saved) document.getElementById('apiUrl').value = saved;
+})();
     </script>
 </body>
 
 </html>
+
