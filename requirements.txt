@@ -1,7 +1,7 @@
 flask
 flask-cors
-yfinance
 numpy<2.0
 pandas
 gunicorn
-ta
+pyotp
+requests
