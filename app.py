@@ -736,6 +736,37 @@ def api_results():
     return jsonify(cached_results)
 
 application=app
+@app.route('/api/debug')
+def api_debug():
+    results = {}
+    
+    # Test 1: Token
+    try:
+        t = get_token()
+        results['token'] = 'OK' if t else 'EMPTY'
+    except Exception as e:
+        results['token'] = f'FAILED: {str(e)}'
+    
+    # Test 2: Fetch one stock
+    try:
+        df = fetch_stock_data('RELIANCE')
+        results['fetch_reliance'] = f'OK - {len(df)} rows' if df is not None else 'RETURNED NONE'
+    except Exception as e:
+        results['fetch_reliance'] = f'FAILED: {str(e)}'
+    
+    # Test 3: Supabase
+    try:
+        r = requests.get(f"{SUPABASE_URL}/rest/v1/fyers_tokens",
+                        headers=SUPA_HEADERS, params={"id":"eq.1","select":"*"}, timeout=10)
+        results['supabase'] = f'OK - status {r.status_code}'
+    except Exception as e:
+        results['supabase'] = f'FAILED: {str(e)}'
+    
+    return jsonify(results)
+```
 
+Add it, push to GitHub, then hit:
+```
+https://quantum-scanner.onrender.com/api/debug
 if __name__=='__main__':
     app.run(host='0.0.0.0',port=10000)
