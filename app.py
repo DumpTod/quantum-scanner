@@ -14,9 +14,9 @@ warnings.filterwarnings('ignore')
 # ██████╗ FYERS CREDENTIALS — FILL IN YOUR VALUES BELOW
 # ============================================================
 
-FYERS_USER_ID   = "YOUR_FYERS_USER_ID"    # e.g. "XM12345"
-FYERS_PIN       = "YOUR_4_DIGIT_PIN"      # e.g. "1234"
-FYERS_TOTP_KEY  = "YOUR_TOTP_SECRET_KEY"  # Long string from TOTP setup
+FYERS_USER_ID   = "XS19765"    # e.g. "XM12345"
+FYERS_PIN       = "2504"      # e.g. "1234"
+FYERS_TOTP_KEY  = "4OZK5LE3F3KAKHGXTEWSK3BAALXZDLRB"  # Long string from TOTP setup
 
 # Already filled from your app creation:
 FYERS_CLIENT_ID  = "VS55VDHYCW-100"
