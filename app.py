@@ -226,7 +226,7 @@ def fetch_stock_data(symbol, period="18mo"):
         date_from = date_to - timedelta(days=days)
         fyers_sym = to_fyers_symbol(symbol)
         r = requests.get(
-            ""https://api-t1.fyers.in/data/v3/history"",
+            "https://api-t1.fyers.in/data/v3/history",
             headers=fyers_headers(),
             params={"symbol":      fyers_sym,
                     "resolution":  "D",
