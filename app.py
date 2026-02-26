@@ -221,29 +221,31 @@ def supa_save_trades(symbol, direction, trades):
 
 def fetch_stock_data(symbol, period="18mo"):
     try:
+        from fyers_apiv3 import fyersModel
         days      = {"18mo": 540, "1y": 365, "6mo": 180}.get(period, 540)
         date_to   = datetime.now()
         date_from = date_to - timedelta(days=days)
         fyers_sym = to_fyers_symbol(symbol)
-        r = requests.get(
-            "https://api-t1.fyers.in/data/v3/history",
-            headers=fyers_headers(),
-            params={"symbol":      fyers_sym,
-                    "resolution":  "D",
-                    "date_format": "1",
-                    "range_from":  date_from.strftime("%Y-%m-%d"),
-                    "range_to":    date_to.strftime("%Y-%m-%d"),
-                    "cont_flag":   "1"},
-            timeout=15
+
+        fyers = fyersModel.FyersModel(
+            client_id=FYERS_CLIENT_ID,
+            token=get_token(),
+            is_async=False,
+            log_path=""
         )
-        if r.status_code != 200:
-            print(f"[Fyers] HTTP {r.status_code} for {fyers_sym}")
+        data = {
+            "symbol":      fyers_sym,
+            "resolution":  "D",
+            "date_format": "1",
+            "range_from":  date_from.strftime("%Y-%m-%d"),
+            "range_to":    date_to.strftime("%Y-%m-%d"),
+            "cont_flag":   "1"
+        }
+        response = fyers.history(data=data)
+        if response.get("s") != "ok" or not response.get("candles"):
+            print(f"[Fyers] Bad response for {fyers_sym}: {response.get('message','')}")
             return None
-        data = r.json()
-        if data.get("s") != "ok" or not data.get("candles"):
-            print(f"[Fyers] Bad response for {fyers_sym}: {data.get('message','')}")
-            return None
-        df = pd.DataFrame(data["candles"],
+        df = pd.DataFrame(response["candles"],
                           columns=["timestamp","Open","High","Low","Close","Volume"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
         df.set_index("timestamp", inplace=True)
