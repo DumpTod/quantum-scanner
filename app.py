@@ -772,19 +772,32 @@ def api_backtest_trades(symbol, direction):
     except Exception as e:
         return jsonify({'error':str(e)}),500
 
+import threading
+
 @app.route('/api/scan')
 def api_scan():
-    global cached_results,scan_in_progress
+    global cached_results, scan_in_progress
     if scan_in_progress:
-        return jsonify({'status':'busy','message':'Scan in progress'}),429
-    mx=request.args.get('max',default=None,type=int)
-    scan_in_progress=True
-    try:
-        results=run_quantum_scan(mx)
-        cached_results={'buy':results['buy'],'sell':results['sell'],
-                        'last_scan':datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        'total_stocks_scanned':mx if mx else len(ALL_STOCKS)}
-        return jsonify(cached_results)
+        return jsonify({'status':'busy','message':'Scan in progress, check /api/results'}), 200
+    mx = request.args.get('max', default=None, type=int)
+
+    def run_scan():
+        global cached_results, scan_in_progress
+        scan_in_progress = True
+        try:
+            results = run_quantum_scan(mx)
+            cached_results = {
+                'buy': results['buy'], 'sell': results['sell'],
+                'last_scan': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'total_stocks_scanned': mx if mx else len(ALL_STOCKS)
+            }
+        except Exception as e:
+            print(f"[Scan] Error: {e}")
+        finally:
+            scan_in_progress = False
+
+    threading.Thread(target=run_scan, daemon=True).start()
+    return jsonify({'status':'started','message':'Scan running in background. Check /api/results in 3-5 mins.'})
     except Exception as e:
         return jsonify({'status':'error','message':str(e)}),500
     finally:
