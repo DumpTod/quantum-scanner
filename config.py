@@ -2,7 +2,7 @@
 
 FYERS_CLIENT_ID  = "VS55VDHYCW-100"
 FYERS_SECRET_KEY = "724FOKKSFS"
-FYERS_PIN        = ""          # Fill this in before running
+FYERS_PIN        = "2504"          # Fill this in before running
 FYERS_REDIRECT   = "https://trade.fyers.in/api-login/redirect-uri/index.html"
 
 SUPABASE_URL     = "https://ntxkqmjnmaowvwduswea.supabase.co"
