@@ -131,7 +131,7 @@ def get_token():
 
 def fyers_headers():
     return {
-        "Authorization": f"{FYERS_CLIENT_ID}:{get_token()}",
+        "Authorization": f"Bearer {get_token()}",
         "Content-Type":  "application/json"
     }
 
@@ -226,7 +226,7 @@ def fetch_stock_data(symbol, period="18mo"):
         date_from = date_to - timedelta(days=days)
         fyers_sym = to_fyers_symbol(symbol)
         r = requests.get(
-            "https://api-t2.fyers.in/data/v3/history",
+            ""https://api-t1.fyers.in/data/v3/history"",
             headers=fyers_headers(),
             params={"symbol":      fyers_sym,
                     "resolution":  "D",
