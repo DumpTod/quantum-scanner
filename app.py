@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore')
 
 FYERS_CLIENT_ID  = "VS55VDHYCW-100"
 FYERS_SECRET_KEY = "724FOKKSFS"
-FYERS_PIN        = "2504"   # ← Fill this in
+FYERS_PIN        = "YOUR_4_DIGIT_PIN"   # ← Fill this in
 
 FYERS_APP_HASH = hashlib.sha256(
     f"{FYERS_CLIENT_ID}:{FYERS_SECRET_KEY}".encode()
@@ -719,21 +719,38 @@ def api_token():
 @app.route('/api/debug')
 def api_debug():
     results = {}
+
+    # Test 1: Token
     try:
-        from fyers_apiv3 import fyersModel
-        fyers = fyersModel.FyersModel(
-            client_id=FYERS_CLIENT_ID,
-            token=get_token(),
-            is_async=False,
-            log_path=""
-        )
-        data = {"symbol":"NSE:RELIANCE-EQ","resolution":"D",
-                "date_format":"1","range_from":"2025-01-01",
-                "range_to":"2025-12-31","cont_flag":"1"}
-        response = fyers.history(data=data)
-        results['raw_response'] = str(response)
+        t = get_token()
+        results['token'] = 'OK' if t else 'EMPTY'
     except Exception as e:
-        results['error'] = str(e)
+        results['token'] = f'FAILED: {str(e)}'
+
+    # Test 2: Fetch RELIANCE
+    try:
+        df = fetch_stock_data('RELIANCE')
+        results['fetch_RELIANCE'] = f'OK - {len(df)} rows' if df is not None else 'RETURNED NONE'
+    except Exception as e:
+        results['fetch_RELIANCE'] = f'FAILED: {str(e)}'
+
+    # Test 3: Fetch M&M (symbol map test)
+    try:
+        df2 = fetch_stock_data('M&M')
+        results['fetch_MM'] = f'OK - {len(df2)} rows' if df2 is not None else 'RETURNED NONE'
+    except Exception as e:
+        results['fetch_MM'] = f'FAILED: {str(e)}'
+
+    # Test 4: Supabase
+    try:
+        r = requests.get(f"{SUPABASE_URL}/rest/v1/fyers_tokens",
+                         headers=SUPA_HEADERS,
+                         params={"id":"eq.1","select":"*"},
+                         timeout=10)
+        results['supabase'] = f'OK - status {r.status_code}'
+    except Exception as e:
+        results['supabase'] = f'FAILED: {str(e)}'
+
     return jsonify(results)
 
 @app.route('/api/backtest/<symbol>/<direction>')
