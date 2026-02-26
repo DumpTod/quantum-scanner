@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore')
 
 FYERS_CLIENT_ID  = "VS55VDHYCW-100"
 FYERS_SECRET_KEY = "724FOKKSFS"
-FYERS_PIN        = "YOUR_4_DIGIT_PIN"   # ← Fill this in
+FYERS_PIN        = "2504"   # ← Fill this in
 
 FYERS_APP_HASH = hashlib.sha256(
     f"{FYERS_CLIENT_ID}:{FYERS_SECRET_KEY}".encode()
