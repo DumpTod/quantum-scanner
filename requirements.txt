@@ -1,7 +1,0 @@
-flask
-flask-cors
-numpy<2.0
-pandas
-gunicorn
-requests
-fyers-apiv3
