@@ -632,8 +632,8 @@ def quantum_scan(symbol):
         bt,trades=backtest_quantum(df,direction)
         supa_save_cache(symbol,direction,bt)
         supa_save_trades(symbol,direction,trades)
-    if bt['total_trades']>=3 and bt['win_rate']<40:  return None
-    if bt['total_trades']>=3 and bt['expectancy']<0: return None
+    if bt['total_trades']>=5 and bt['win_rate']<35:  return None
+    if bt['total_trades']>=5 and bt['expectancy']<-1: return None
     tp=m1p+m2p+m3p+m4p+m5p; tt=m1t+m2t+m3t+m4t+m5t
     mp=(tp/tt)*100; ab=(agreement-3)*5; bb=0
     if bt['total_trades']>=3:
@@ -643,7 +643,7 @@ def quantum_scan(symbol):
     ts=round(min(mp+ab+bb,100),1)
     if   ts>=85 and bt['total_trades']>=3 and bt['win_rate']>=60 and bt['expectancy']>0: grade="A+"; conf="HIGH"
     elif ts>=80 and bt['total_trades']>=3 and bt['win_rate']>=50 and bt['expectancy']>0: grade="A+"; conf="MEDIUM"
-    else: return None
+    elif ts>=70: grade="A"; conf="LOW"
     am=[n for n,d in [("MRB",m1d),("MDD",m2d),("VRC",m3d),("OFI",m4d),("MTC",m5d)] if d==direction]
     return {
         'symbol':symbol,'direction':direction,
