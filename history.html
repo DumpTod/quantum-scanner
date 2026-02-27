@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quantum Scanner — Signal History</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#f0f2f5;--primary:#4682b4;--primary-dark:#1a3a5c;
+    --green:#22c55e;--red:#ef4444;--gold:#eab308;--purple:#8b5cf6;
+    --orange:#f97316;--cyan:#06b6d4;--blue:#3b82f6;
+    --card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,var(--primary-dark),#2d5a7b,var(--primary),#5a9fd4);padding:20px 30px;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header-left h1{font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-left p{font-size:0.78rem;opacity:0.8;margin-top:4px}
+.h-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.h-btns a,.h-btns button{padding:10px 18px;border-radius:8px;font-size:0.83rem;font-weight:600;cursor:pointer;text-decoration:none;border:none;color:#fff;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;font-family:'Inter',sans-serif}
+.h-btns a:hover,.h-btns button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.btn-back{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3)}
+.btn-rescan{background:linear-gradient(135deg,var(--purple),#a78bfa)}
+.btn-rescan:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
+.btn-export{background:var(--green)}
+.btn-clear{background:var(--red)}
+.rescan-bar{display:none;background:var(--primary-dark);padding:12px 30px;color:rgba(255,255,255,0.9);font-size:0.82rem}
+.rescan-bar.active{display:block}
+.rs-prog{background:rgba(255,255,255,0.2);border-radius:6px;height:6px;margin:8px 0;overflow:hidden}
+.rs-fill{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);border-radius:6px;transition:width 0.4s}
+.rs-stats{display:flex;gap:20px;margin-top:6px;font-size:0.75rem;flex-wrap:wrap}
+.rs-stat{color:rgba(255,255,255,0.75)}
+.rs-stat strong{color:#fff}
+.filter-bar{background:var(--card);padding:12px 30px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.filter-bar select,.filter-bar input{padding:7px 12px;border-radius:6px;border:1px solid var(--border);font-size:0.8rem;background:#fff;font-family:'Inter',sans-serif;color:var(--text)}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(70,130,180,0.15)}
+.filter-bar button{padding:7px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;font-weight:500}
+.filter-bar button:hover{background:var(--primary-dark)}
+.container{max-width:1600px;margin:0 auto;padding:20px 30px}
+.stats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border-radius:10px;padding:14px;text-align:center;border-top:3px solid var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.stat-card h4{font-size:0.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:500}
+.stat-card .val{font-size:1.3rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sc-green{border-top-color:var(--green)}.sc-red{border-top-color:var(--red)}.sc-blue{border-top-color:var(--blue)}.sc-gold{border-top-color:var(--gold)}.sc-purple{border-top-color:var(--purple)}.sc-orange{border-top-color:var(--orange)}.sc-cyan{border-top-color:var(--cyan)}
+.signal-log{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.log-header h3{font-size:1rem;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;gap:8px}
+.log-header h3 span{background:var(--primary);color:#fff;padding:2px 10px;border-radius:10px;font-size:0.73rem}
+.log-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:0.72rem;color:var(--text2)}
+.leg-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.74rem}
+thead{background:var(--primary-dark);color:#fff;position:sticky;top:0;z-index:10}
+th{padding:10px 8px;cursor:pointer;white-space:nowrap;font-size:0.69rem;text-align:left;font-weight:600;letter-spacing:0.3px;user-select:none}
+th:hover{background:#2d5a7b}
+td{padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover{background:rgba(70,130,180,0.04)}
+tr.target-row{background:rgba(34,197,94,0.06)}
+tr.stop-row{background:rgba(239,68,68,0.06)}
+tr.entry-met-row{background:rgba(234,179,8,0.06)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:5px;font-size:0.65rem;font-weight:700;white-space:nowrap}
+.sb-pending{background:rgba(100,116,139,0.12);color:var(--text2)}
+.sb-watching{background:rgba(234,179,8,0.15);color:#b45309}
+.sb-target{background:rgba(34,197,94,0.15);color:#16a34a}
+.sb-stop{background:rgba(239,68,68,0.15);color:var(--red)}
+.grade-badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:0.68rem;font-weight:700;color:#fff}
+.gb-high{background:var(--green)}.gb-medium{background:var(--blue)}
+.mdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 1px;cursor:help}
+.pnl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.75rem}
+.pnl.pos{color:var(--green)}.pnl.neg{color:var(--red)}
+.entry-indicator{font-size:0.65rem;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.ei-yes{background:rgba(234,179,8,0.15);color:#b45309}
+.ei-no{background:rgba(100,116,139,0.1);color:var(--text2)}
+.fno-tag{font-size:0.58rem;background:rgba(234,179,8,0.18);color:#92400e;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600}
+.pagination{display:flex;justify-content:center;gap:4px;margin-top:14px}
+.pagination button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;color:var(--text);transition:all 0.15s}
+.pagination button:hover:not(:disabled){background:var(--primary);color:#fff;border-color:var(--primary)}
+.pagination button:disabled{opacity:0.35;cursor:default}
+.page-active{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-state .icon{font-size:48px;margin-bottom:15px}
+.empty-state p{font-size:14px;line-height:1.8}
+.footer{text-align:center;padding:20px;color:var(--text2);font-size:0.73rem;margin-top:10px}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;text-align:center}.filter-bar{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <h1>📋 Signal History &amp; Track Record</h1>
+        <p>All scanner signals auto-saved &middot; Rescan checks entry, target &amp; stop loss after signal date</p>
+    </div>
+    <div class="h-btns">
+        <a href="index.html" class="btn-back">&#8592; Back to Scanner</a>
+        <button class="btn-rescan" id="rescanBtn" onclick="startRescan()">&#x1F504; Rescan Trades</button>
+        <button class="btn-export" onclick="exportCSV()">&#x1F4E5; Export CSV</button>
+        <button class="btn-clear" onclick="clearAll()">&#x1F5D1; Clear All</button>
+    </div>
+</div>
+
+<div class="rescan-bar" id="rescanBar">
+    <div id="rsLabel">Rescanning trades...</div>
+    <div class="rs-prog"><div class="rs-fill" id="rsFill" style="width:0%"></div></div>
+    <div class="rs-stats">
+        <div class="rs-stat">Checked: <strong id="rsChecked">0</strong></div>
+        <div class="rs-stat">Entry Met: <strong id="rsEntryMet">0</strong></div>
+        <div class="rs-stat">Target Hit: <strong id="rsTarget">0</strong></div>
+        <div class="rs-stat">SL Hit: <strong id="rsSL">0</strong></div>
+        <div class="rs-stat">Watching: <strong id="rsLive">0</strong></div>
+        <div class="rs-stat">Pending: <strong id="rsPending">0</strong></div>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <select id="fGrade" onchange="applyFilters()">
+        <option value="">All Grades</option>
+        <option value="A+ HIGH">A+ HIGH</option>
+        <option value="A+ MEDIUM">A+ MEDIUM</option>
+    </select>
+    <select id="fDir" onchange="applyFilters()">
+        <option value="">All Directions</option>
+        <option value="BUY">BUY</option>
+        <option value="SELL">SELL</option>
+    </select>
+    <select id="fOutcome" onchange="applyFilters()">
+        <option value="">All Outcomes</option>
+        <option value="pending">Pending</option>
+        <option value="watching">Entry Met</option>
+        <option value="target_hit">Target Hit</option>
+        <option value="stop_hit">Stop Hit</option>
+    </select>
+    <input type="text" id="fSymbol" placeholder="Search symbol..." oninput="applyFilters()">
+    <button onclick="resetFilters()">Reset</button>
+</div>
+
+<div class="container">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="signal-log">
+        <div class="log-header">
+            <h3>Signal Log <span id="logCount">0</span></h3>
+            <div class="log-legend">
+                <span><span class="leg-dot" style="background:#94a3b8"></span>Pending</span>
+                <span><span class="leg-dot" style="background:#eab308"></span>Entry Met / Watching</span>
+                <span><span class="leg-dot" style="background:#22c55e"></span>Target Hit</span>
+                <span><span class="leg-dot" style="background:#ef4444"></span>Stop Hit</span>
+            </div>
+        </div>
+        <div class="table-wrap"><div id="signalLog"></div></div>
+    </div>
+</div>
+
+<div class="footer">Quantum Scanner v2.0 &mdash; History stored locally &middot; Max 5,000 signals</div>
+
+<script>
+const PER_PAGE = 50;
+const API_URL  = localStorage.getItem('renderApiUrl') || 'https://quantum-scanner.onrender.com';
+let allSignals = [];
+let filtered   = [];
+let currentPage = 1;
+let sortCol = 'scan_time';
+let sortDir = 'desc';
+
+// Load from localStorage
+try {
+    const raw = localStorage.getItem('signalHistory');
+    if (raw) {
+        const all = JSON.parse(raw);
+        allSignals = all.filter(s => s.scanner_type === 'quantum' || s.models || s.agreeing_models);
+    }
+} catch(e) { console.error('Load:', e); }
+
+function saveBack() {
+    try {
+        const raw = localStorage.getItem('signalHistory');
+        const all = raw ? JSON.parse(raw) : [];
+        const nonQ = all.filter(s => !(s.scanner_type === 'quantum' || s.models || s.agreeing_models));
+        const merged = [...nonQ, ...allSignals].slice(-5000);
+        localStorage.setItem('signalHistory', JSON.stringify(merged));
+    } catch(e) {}
+}
+
+// ===== RESCAN =====
+async function startRescan() {
+    const toRescan = allSignals.filter(s => !s.outcome || s.outcome === 'pending' || s.outcome === 'watching');
+    if (toRescan.length === 0) { alert('No pending or open trades to rescan.'); return; }
+
+    const btn = document.getElementById('rescanBtn');
+    btn.disabled = true;
+    btn.textContent = 'Rescanning...';
+    document.getElementById('rescanBar').classList.add('active');
+    document.getElementById('rsFill').style.width = '5%';
+    document.getElementById('rsLabel').textContent = 'Preparing request...';
+
+    // Build unique symbol+date requests
+    const seen = new Set();
+    const requests = [];
+    toRescan.forEach(s => {
+        let fromDate = '';
+        if (s.scan_time) {
+            fromDate = s.scan_time.slice(0, 10);
+        } else if (s.scan_date) {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            const parts = s.scan_date.split('/');
+            fromDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : '';
+        }
+        const key = `${s.symbol}__${fromDate}`;
+        if (!seen.has(key) && s.symbol && fromDate) {
+            seen.add(key);
+            requests.push({ symbol: s.symbol, from_date: fromDate });
+        }
+    });
+
+    document.getElementById('rsLabel').textContent = `Fetching prices for ${requests.length} symbols from Render...`;
+
+    let priceData = {};
+    try {
+        const resp = await fetch(`${API_URL}/api/prices`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requests })
+        });
+        const json = await resp.json();
+        priceData = json.results || {};
+    } catch(e) {
+        alert('Failed to fetch prices: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Rescan Trades';
+        document.getElementById('rescanBar').classList.remove('active');
+        return;
+    }
+
+    document.getElementById('rsFill').style.width = '50%';
+    document.getElementById('rsLabel').textContent = 'Analysing each signal...';
+
+    const stats = { checked:0, entryMet:0, target:0, sl:0, live:0, pending:0 };
+
+    toRescan.forEach(sig => {
+        const pData = priceData[sig.symbol];
+        if (!pData || pData.error || !pData.candles || !pData.candles.length) {
+            sig.outcome = sig.outcome || 'pending';
+            stats.pending++; stats.checked++;
+            updateRS(stats, toRescan.length);
+            return;
+        }
+
+        const candles = pData.candles;
+        const entry   = parseFloat(sig.entry);
+        const sl      = parseFloat(sig.stop_loss || sig.sl);
+        const target  = parseFloat(sig.target);
+        const dir     = sig.direction;
+
+        let entryMet    = sig.entry_met || false;
+        let entryMetDay = sig.entry_met_day || null;
+        let outcome     = sig.outcome || 'pending';
+        let exitPrice   = sig.exit_price || null;
+        let livePnl     = null;
+
+        for (const c of candles) {
+            if (outcome === 'target_hit' || outcome === 'stop_hit') break;
+
+            // Check entry
+            if (!entryMet) {
+                if (dir === 'BUY'  && c.low  <= entry) { entryMet = true; entryMetDay = c.date; }
+                if (dir === 'SELL' && c.high >= entry) { entryMet = true; entryMetDay = c.date; }
+            }
+
+            // Check SL/Target only after entry met
+            if (entryMet) {
+                if (dir === 'BUY') {
+                    if (c.low  <= sl)     { outcome = 'stop_hit';   exitPrice = sl;     break; }
+                    if (c.high >= target) { outcome = 'target_hit'; exitPrice = target; break; }
+                } else {
+                    if (c.high >= sl)     { outcome = 'stop_hit';   exitPrice = sl;     break; }
+                    if (c.low  <= target) { outcome = 'target_hit'; exitPrice = target; break; }
+                }
+            }
+        }
+
+        const latestClose = pData.latest_close;
+        if (outcome !== 'target_hit' && outcome !== 'stop_hit') {
+            if (entryMet) {
+                outcome = 'watching';
+                if (latestClose) {
+                    livePnl = dir === 'BUY'
+                        ? ((latestClose - entry) / entry * 100).toFixed(2)
+                        : ((entry - latestClose) / entry * 100).toFixed(2);
+                }
+            } else {
+                outcome = 'pending';
+            }
+        }
+
+        // Update in allSignals
+        const idx = allSignals.findIndex(s => s._id === sig._id);
+        if (idx > -1) {
+            allSignals[idx].outcome       = outcome;
+            allSignals[idx].entry_met     = entryMet;
+            allSignals[idx].entry_met_day = entryMetDay;
+            allSignals[idx].exit_price    = exitPrice;
+            allSignals[idx].live_price    = latestClose;
+            allSignals[idx].live_pnl_pct  = livePnl;
+            allSignals[idx].last_rescanned = new Date().toISOString();
+        }
+
+        if (entryMet) stats.entryMet++;
+        if (outcome === 'target_hit') stats.target++;
+        else if (outcome === 'stop_hit') stats.sl++;
+        else if (outcome === 'watching') stats.live++;
+        else stats.pending++;
+        stats.checked++;
+        updateRS(stats, toRescan.length);
+    });
+
+    document.getElementById('rsFill').style.width = '100%';
+    document.getElementById('rsLabel').textContent =
+        `Rescan complete — ${stats.checked} signals checked · ${stats.target} targets hit · ${stats.sl} stops hit`;
+
+    saveBack();
+    applyFilters();
+
+    btn.disabled = false;
+    btn.textContent = 'Rescan Trades';
+    setTimeout(() => document.getElementById('rescanBar').classList.remove('active'), 10000);
+}
+
+function updateRS(s, total) {
+    document.getElementById('rsChecked').textContent  = s.checked;
+    document.getElementById('rsEntryMet').textContent = s.entryMet;
+    document.getElementById('rsTarget').textContent   = s.target;
+    document.getElementById('rsSL').textContent       = s.sl;
+    document.getElementById('rsLive').textContent     = s.live;
+    document.getElementById('rsPending').textContent  = s.pending;
+    document.getElementById('rsFill').style.width     = Math.min(50 + Math.round(s.checked / total * 45), 95) + '%';
+}
+
+// ===== FILTERS =====
+function applyFilters() {
+    const fG = document.getElementById('fGrade').value;
+    const fD = document.getElementById('fDir').value;
+    const fO = document.getElementById('fOutcome').value;
+    const fS = document.getElementById('fSymbol').value.toLowerCase();
+
+    filtered = allSignals.filter(s => {
+        if (fG && (s.grade || '') !== fG) return false;
+        if (fD && (s.direction || '') !== fD) return false;
+        if (fO && (s.outcome || 'pending') !== fO) return false;
+        if (fS && !(s.symbol || '').toLowerCase().includes(fS)) return false;
+        return true;
+    });
+
+    filtered.sort((a, b) => {
+        const av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
+        if (typeof av === 'number' && typeof bv === 'number')
+            return sortDir === 'asc' ? av - bv : bv - av;
+        return sortDir === 'asc'
+            ? String(av).localeCompare(String(bv))
+            : String(bv).localeCompare(String(av));
+    });
+
+    currentPage = 1;
+    renderStats();
+    renderTable();
+}
+
+function resetFilters() {
+    ['fGrade','fDir','fOutcome'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fSymbol').value = '';
+    applyFilters();
+}
+
+function sortBy(col) {
+    sortDir = sortCol === col ? (sortDir === 'asc' ? 'desc' : 'asc') : 'desc';
+    sortCol = col;
+    applyFilters();
+}
+
+// ===== STATS =====
+function renderStats() {
+    const total    = filtered.length;
+    const targets  = filtered.filter(s => s.outcome === 'target_hit').length;
+    const stops    = filtered.filter(s => s.outcome === 'stop_hit').length;
+    const watching = filtered.filter(s => s.outcome === 'watching').length;
+    const pending  = filtered.filter(s => !s.outcome || s.outcome === 'pending').length;
+    const resolved = targets + stops;
+    const wr       = resolved > 0 ? Math.round(targets / resolved * 100) : 0;
+
+    let totalPnl = 0;
+    filtered.forEach(s => {
+        const ep  = parseFloat(s.exit_price || 0);
+        const ent = parseFloat(s.entry || 0);
+        if ((s.outcome === 'target_hit' || s.outcome === 'stop_hit') && ep && ent) {
+            totalPnl += s.direction === 'BUY'
+                ? (ep - ent) / ent * 100
+                : (ent - ep) / ent * 100;
+        }
+    });
+
+    const avgScore = total > 0
+        ? Math.round(filtered.reduce((a, s) => a + (s.total_score || 0), 0) / total) : 0;
+
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><h4>Total Signals</h4><div class="val">${total}</div></div>
+        <div class="stat-card sc-green"><h4>Target Hit</h4><div class="val" style="color:var(--green)">${targets}</div></div>
+        <div class="stat-card sc-red"><h4>Stop Hit</h4><div class="val" style="color:var(--red)">${stops}</div></div>
+        <div class="stat-card sc-blue"><h4>Win Rate</h4><div class="val" style="color:var(--blue)">${wr}%</div></div>
+        <div class="stat-card sc-gold"><h4>Watching</h4><div class="val" style="color:#b45309">${watching}</div></div>
+        <div class="stat-card sc-cyan"><h4>Pending</h4><div class="val" style="color:var(--cyan)">${pending}</div></div>
+        <div class="stat-card sc-purple"><h4>Avg Score</h4><div class="val" style="color:var(--purple)">${avgScore}</div></div>
+        <div class="stat-card ${totalPnl >= 0 ? 'sc-green' : 'sc-red'}">
+            <h4>Total P&amp;L</h4>
+            <div class="val" style="color:${totalPnl >= 0 ? 'var(--green)' : 'var(--red)'}">
+                ${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(1)}%
+            </div>
+        </div>`;
+}
+
+// ===== TABLE =====
+function modelDots(s) {
+    const models = ['MRB','MDD','VRC','OFI','MTC'];
+    const colors = {MRB:'#3b82f6',MDD:'#8b5cf6',VRC:'#f97316',OFI:'#06b6d4',MTC:'#22c55e'};
+    const active = [];
+    if (s.models) {
+        Object.entries(s.models).forEach(([k, v]) => {
+            const sig = typeof v === 'object' ? v.signal : v;
+            if (sig === s.direction) active.push(k.toUpperCase());
+        });
+    }
+    return models.map(m =>
+        `<span class="mdot" style="background:${active.includes(m) ? colors[m] : '#d1d5db'}" title="${m}${active.includes(m)?' active':''}"></span>`
+    ).join('');
+}
+
+function renderTable() {
+    if (filtered.length === 0) {
+        document.getElementById('signalLog').innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📊</div>
+                <p>No signals yet.<br><br>
+                Run a scan from the <a href="index.html" style="color:var(--primary)">Scanner</a> —
+                all signals are automatically saved here.</p>
+            </div>`;
+        document.getElementById('logCount').textContent = '0';
+        return;
+    }
+
+    const page = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+    const ar = col => sortCol === col ? (sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+
+    let h = `<table><thead><tr>
+        <th onclick="sortBy('scan_time')">Scan Date${ar('scan_time')}</th>
+        <th onclick="sortBy('symbol')">Symbol${ar('symbol')}</th>
+        <th onclick="sortBy('direction')">Dir${ar('direction')}</th>
+        <th onclick="sortBy('grade')">Grade${ar('grade')}</th>
+        <th onclick="sortBy('total_score')">Score${ar('total_score')}</th>
+        <th>Models</th>
+        <th onclick="sortBy('entry')">Entry&#x20B9;${ar('entry')}</th>
+        <th onclick="sortBy('stop_loss')">SL&#x20B9;${ar('stop_loss')}</th>
+        <th onclick="sortBy('target')">Target&#x20B9;${ar('target')}</th>
+        <th>R:R</th>
+        <th onclick="sortBy('win_rate')">BT Win%${ar('win_rate')}</th>
+        <th>Entry Met</th>
+        <th>Outcome</th>
+        <th>Live Price</th>
+        <th>P&amp;L%</th>
+        <th>Last Checked</th>
+    </tr></thead><tbody>`;
+
+    page.forEach(s => {
+        const dir     = s.direction || '';
+        const dStyle  = dir === 'BUY' ? 'color:var(--green)' : 'color:var(--red)';
+        const g       = s.grade || '';
+        const gCls    = g === 'A+ HIGH' ? 'gb-high' : 'gb-medium';
+        const outcome = s.outcome || 'pending';
+        const fno     = s.is_fno ? '<span class="fno-tag">FnO</span>' : '';
+
+        let rowCls = '';
+        if (outcome === 'target_hit') rowCls = 'target-row';
+        else if (outcome === 'stop_hit') rowCls = 'stop-row';
+        else if (outcome === 'watching') rowCls = 'entry-met-row';
+
+        let badge = '';
+        if      (outcome === 'target_hit') badge = '<span class="status-badge sb-target">Target Hit</span>';
+        else if (outcome === 'stop_hit')   badge = '<span class="status-badge sb-stop">SL Hit</span>';
+        else if (outcome === 'watching')   badge = '<span class="status-badge sb-watching">Watching</span>';
+        else                               badge = '<span class="status-badge sb-pending">Pending</span>';
+
+        const entryMetHtml = s.entry_met
+            ? `<span class="entry-indicator ei-yes">Yes - ${s.entry_met_day || ''}</span>`
+            : `<span class="entry-indicator ei-no">Not Yet</span>`;
+
+        const liveHtml = s.live_price
+            ? `<span style="font-family:'JetBrains Mono',monospace">&#x20B9;${s.live_price}</span>` : '—';
+
+        let pnlHtml = '—';
+        if (outcome === 'target_hit' || outcome === 'stop_hit') {
+            const ep  = parseFloat(s.exit_price || 0);
+            const ent = parseFloat(s.entry || 0);
+            if (ep && ent) {
+                const pct = dir === 'BUY'
+                    ? ((ep - ent) / ent * 100).toFixed(2)
+                    : ((ent - ep) / ent * 100).toFixed(2);
+                const cls = parseFloat(pct) >= 0 ? 'pos' : 'neg';
+                pnlHtml = `<span class="pnl ${cls}">${parseFloat(pct) >= 0 ? '+' : ''}${pct}%</span>`;
+            }
+        } else if (s.live_pnl_pct !== null && s.live_pnl_pct !== undefined) {
+            const cls = parseFloat(s.live_pnl_pct) >= 0 ? 'pos' : 'neg';
+            pnlHtml = `<span class="pnl ${cls}">${parseFloat(s.live_pnl_pct) >= 0 ? '+' : ''}${s.live_pnl_pct}%</span>`;
+        }
+
+        const scanDisplay = s.scan_time
+            ? new Date(s.scan_time).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+            : s.scan_date || '—';
+
+        const lastChecked = s.last_rescanned
+            ? new Date(s.last_rescanned).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+            : '—';
+
+        h += `<tr class="${rowCls}">
+            <td style="white-space:nowrap;font-size:0.72rem">${scanDisplay}</td>
+            <td style="font-weight:600">${s.symbol}${fno}</td>
+            <td style="${dStyle};font-weight:700">${dir}</td>
+            <td><span class="grade-badge ${gCls}">${g}</span></td>
+            <td style="font-family:'JetBrains Mono',monospace">${s.total_score||0}</td>
+            <td>${modelDots(s)}</td>
+            <td style="font-family:'JetBrains Mono',monospace">&#x20B9;${Number(s.entry||0).toFixed(2)}</td>
+            <td style="color:var(--red);font-family:'JetBrains Mono',monospace">&#x20B9;${Number(s.stop_loss||s.sl||0).toFixed(2)}</td>
+            <td style="color:var(--green);font-family:'JetBrains Mono',monospace">&#x20B9;${Number(s.target||0).toFixed(2)}</td>
+            <td>${Number(s.rr||0).toFixed(1)}</td>
+            <td>${s.win_rate||0}%</td>
+            <td>${entryMetHtml}</td>
+            <td>${badge}</td>
+            <td>${liveHtml}</td>
+            <td>${pnlHtml}</td>
+            <td style="font-size:0.68rem;color:var(--text2)">${lastChecked}</td>
+        </tr>`;
+    });
+
+    h += '</tbody></table>';
+
+    const totalPages = Math.ceil(filtered.length / PER_PAGE);
+    if (totalPages > 1) {
+        h += '<div class="pagination">';
+        h += `<button onclick="goPage(1)" ${currentPage===1?'disabled':''}>&#171;</button>`;
+        h += `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>`;
+        let start = Math.max(1, currentPage - 2);
+        let end   = Math.min(totalPages, start + 4);
+        if (end - start < 4) start = Math.max(1, end - 4);
+        for (let p = start; p <= end; p++) {
+            h += `<button onclick="goPage(${p})" class="${p===currentPage?'page-active':''}">${p}</button>`;
+        }
+        h += `<button onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&#8250;</button>`;
+        h += `<button onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>&#187;</button>`;
+        h += '</div>';
+    }
+
+    document.getElementById('signalLog').innerHTML = h;
+    document.getElementById('logCount').textContent = filtered.length;
+}
+
+function goPage(p) { currentPage = p; renderTable(); }
+
+// ===== EXPORT =====
+function exportCSV() {
+    let csv = 'Scan Date,Symbol,FnO,Direction,Grade,Score,Entry,SL,Target,RR,BT WinRate,Entry Met,Entry Met Day,Outcome,Live Price,Live PnL%,Last Checked\n';
+    filtered.forEach(s => {
+        const scanD = s.scan_time
+            ? new Date(s.scan_time).toLocaleString('en-GB') : (s.scan_date || '');
+        csv += [
+            `"${scanD}"`, s.symbol, s.is_fno?'Yes':'No',
+            s.direction, s.grade, s.total_score||0,
+            s.entry||0, s.stop_loss||s.sl||0, s.target||0, s.rr||0,
+            (s.win_rate||0)+'%',
+            s.entry_met?'Yes':'No', s.entry_met_day||'',
+            s.outcome||'pending',
+            s.live_price||'', s.live_pnl_pct||'',
+            s.last_rescanned||''
+        ].join(',') + '\n';
+    });
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([csv],{type:'text/csv'})),
+        download: `quantum_signals_${new Date().toISOString().slice(0,10)}.csv`
+    });
+    a.click();
+}
+
+function clearAll() {
+    if (!confirm('Delete ALL Quantum signal history permanently?')) return;
+    try {
+        const raw = localStorage.getItem('signalHistory');
+        const all = raw ? JSON.parse(raw) : [];
+        const keep = all.filter(s => !(s.scanner_type === 'quantum' || s.models || s.agreeing_models));
+        localStorage.setItem('signalHistory', JSON.stringify(keep));
+    } catch(e) {}
+    allSignals = [];
+    applyFilters();
+}
+
+// Init
+applyFilters();
+</script>
+</body>
+</html>
